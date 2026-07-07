@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { allConcepts } from './data/concepts'
 import { sections } from './data/curriculum'
 import { getConceptsBySection } from './data/concepts'
-import { LanguageProvider } from './context/LanguageContext'
+import { LanguageProvider, useLanguage } from './context/LanguageContext'
 import { Header } from './components/layout/Header'
 import { Sidebar, MobileNav } from './components/layout/Sidebar'
 import { ConceptSection } from './components/ConceptSection'
 import { SectionDivider } from './components/shared/SectionDivider'
 
 function AppContent() {
+  const { t } = useLanguage()
   const [activeId, setActiveId] = useState(allConcepts[0].id)
   const [searchOpen, setSearchOpen] = useState(false)
   const mainRef = useRef<HTMLElement>(null)
@@ -61,12 +62,21 @@ function AppContent() {
               LLM Visualiser
             </h2>
             <p className="mt-3 max-w-2xl text-gray-300">
-              Zero se LLM tak — pehle AI, vectors &amp; LLM intro, phir KD Tree se MCP tak.
-              Course structured hai — har topic pehle wale pe build hota hai. University-level
-              why-first teaching. Hinglish default, English toggle.
+              {t({
+                hinglish:
+                  'Zero se LLM tak — pehle AI, vectors & LLM intro, phir KD Tree se MCP tak. Course structured hai — har topic pehle wale pe build hota hai. University-level why-first teaching. English default, Hinglish toggle.',
+                english:
+                  'From zero to LLM — AI, vectors & LLM intro first, then KD Tree through MCP. Structured course where every topic builds on the last. University-level why-first teaching with animated dry runs and numerical examples.',
+              })}
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
-              {[`${allConcepts.length} Topics`, '13 Sections', 'Why-First', '12 Sections/Chapter', 'Hinglish + English'].map((tag) => (
+              {[
+                t({ hinglish: `${allConcepts.length} Topics`, english: `${allConcepts.length} Topics` }),
+                t({ hinglish: '13 Sections', english: '13 Sections' }),
+                t({ hinglish: 'Why-First', english: 'Why-First' }),
+                t({ hinglish: '12 Sections/Chapter', english: '12 Sections/Chapter' }),
+                t({ hinglish: 'English + Hinglish', english: 'English + Hinglish' }),
+              ].map((tag) => (
                 <span
                   key={tag}
                   className="rounded-full border border-violet-500/30 bg-violet-600/10 px-3 py-1 text-xs font-medium text-violet-200"
@@ -93,7 +103,12 @@ function AppContent() {
                     />
                     <div className="space-y-24">
                       {concepts.map((concept) => (
-                        <ConceptSection key={concept.id} concept={concept} sectionTitle={section.title} />
+                        <ConceptSection
+                          key={concept.id}
+                          concept={concept}
+                          sectionTitle={section.title}
+                          isActive={concept.id === activeId}
+                        />
                       ))}
                     </div>
                   </div>
@@ -102,7 +117,10 @@ function AppContent() {
           </div>
 
           <footer className="mt-20 border-t border-[var(--color-border)] py-8 text-center text-sm text-gray-500">
-            LLM Visualiser — Built for knowledge sharing
+            {t({
+              hinglish: 'LLM Visualiser — knowledge sharing ke liye banaya gaya',
+              english: 'LLM Visualiser — Built for knowledge sharing',
+            })}
           </footer>
         </main>
       </div>

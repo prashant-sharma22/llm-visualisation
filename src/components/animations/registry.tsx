@@ -1,5 +1,5 @@
-import type { ComponentType } from 'react'
-import { MaskedAttentionAnim, MultiheadAttentionAnim, KVCacheAnim } from './transformer-anims'
+import { lazy, type ComponentType } from 'react'
+import { getComputeAnimation } from '../compute/registry'
 import { FlashAttentionAnim, PagedAttentionAnim, MoEAnim } from './optimization-anims'
 import { QuantizationAnim, SparseAttentionAnim, DistillationAnim, SpeculativeDecodingAnim } from './tradeoff-anims'
 import {
@@ -20,41 +20,20 @@ import {
   LLMIntroAnim,
   CourseRoadmapAnim,
 } from './intro-anims'
-import {
-  KDTreeAnim,
-  AnnoyAnim,
-  HNSWAnim,
-  VectorDBAnim,
-  TokenizationAnim,
-  EmbeddingsAnim,
-  TransformerFlowAnim,
-  QKVAnim,
-  WeightMatricesAnim,
-  ParametersAnim,
-  AttentionMechanismAnim,
-  SoftmaxAnim,
-  LayerNormAnim,
-  FeedForwardAnim,
-  PredictionAnim,
-  GenericConceptAnim,
-} from './foundation-anims'
+import { GenericConceptAnim } from './foundation-anims'
 import {
   ResidualAnim,
   RoPEAnim,
   GQAAnim,
   BertGptAnim,
-  BackpropAnim,
   CrossEntropyAnim,
   LoRAAnim,
-  PrefillDecodeAnim,
   TokenSamplingAnim,
   RAGAnim,
   DPOAnim,
   PositionalEncodingAnim,
   ALiBiAnim,
   CrossAttentionAnim,
-  AutoregressiveAnim,
-  GradientDescentAnim,
   AdamAnim,
   PrefixCacheAnim,
   TensorParallelAnim,
@@ -64,6 +43,18 @@ import {
 
 type AnimComponent = ComponentType<{ step: number }>
 
+type Pro3DExport = typeof import('./pro-3d-anims')
+
+function lazy3D(name: keyof Pro3DExport): AnimComponent {
+  return lazy(() => import('./pro-3d-anims').then((m) => ({ default: m[name] }))) as AnimComponent
+}
+
+const KDTreeAnim3D = lazy3D('KDTreeAnim3D')
+const HNSWAnim3D = lazy3D('HNSWAnim3D')
+const VectorDBAnim3D = lazy3D('VectorDBAnim3D')
+const AnnoyAnim3D = lazy3D('AnnoyAnim3D')
+
+/** Fallback 2D registry for topics without compute viz */
 const registry: Record<string, AnimComponent> = {
   'what-is-ai': WhatIsAIAnim,
   'what-is-vector': WhatIsVectorAnim,
@@ -72,24 +63,10 @@ const registry: Record<string, AnimComponent> = {
   'similarity-distance': SimilarityDistanceAnim,
   'llm-introduction': LLMIntroAnim,
   'course-roadmap': CourseRoadmapAnim,
-  'kd-tree': KDTreeAnim,
-  annoy: AnnoyAnim,
-  hnsw: HNSWAnim,
-  'vector-databases': VectorDBAnim,
-  tokenization: TokenizationAnim,
-  embeddings: EmbeddingsAnim,
-  'transformer-flow': TransformerFlowAnim,
-  'q-k-v': QKVAnim,
-  'wq-wk-wv': WeightMatricesAnim,
-  parameters: ParametersAnim,
-  'attention-mechanism': AttentionMechanismAnim,
-  softmax: SoftmaxAnim,
-  'layer-normalization': LayerNormAnim,
-  'feed-forward': FeedForwardAnim,
-  prediction: PredictionAnim,
-  'masked-attention': MaskedAttentionAnim,
-  'multihead-attention': MultiheadAttentionAnim,
-  'kv-cache': KVCacheAnim,
+  'kd-tree': KDTreeAnim3D,
+  annoy: AnnoyAnim3D,
+  hnsw: HNSWAnim3D,
+  'vector-databases': VectorDBAnim3D,
   'flash-attention': FlashAttentionAnim,
   'paged-attention': PagedAttentionAnim,
   'mixture-of-experts': MoEAnim,
@@ -108,22 +85,15 @@ const registry: Record<string, AnimComponent> = {
   rope: RoPEAnim,
   'gqa-mqa': GQAAnim,
   'bert-vs-gpt': BertGptAnim,
-  backpropagation: BackpropAnim,
   'cross-entropy-loss': CrossEntropyAnim,
   'lora-finetuning': LoRAAnim,
-  'prefill-decode': PrefillDecodeAnim,
   'token-sampling': TokenSamplingAnim,
   rag: RAGAnim,
   dpo: DPOAnim,
   'absolute-positional-encoding': PositionalEncodingAnim,
   alibi: ALiBiAnim,
   'cross-attention': CrossAttentionAnim,
-  'autoregressive-generation': AutoregressiveAnim,
-  'teacher-forcing': AutoregressiveAnim,
-  'gradient-descent': GradientDescentAnim,
   'adam-optimizer': AdamAnim,
-  'gelu-swish-ffn': FeedForwardAnim,
-  'output-projection-wo': MultiheadAttentionAnim,
   'prefix-cache': PrefixCacheAnim,
   'tensor-parallelism': TensorParallelAnim,
   'beam-search': BeamSearchAnim,
@@ -133,5 +103,7 @@ const registry: Record<string, AnimComponent> = {
 }
 
 export function getAnimationForConcept(id: string): AnimComponent {
+  const compute = getComputeAnimation(id)
+  if (compute) return compute
   return registry[id] ?? GenericConceptAnim
 }

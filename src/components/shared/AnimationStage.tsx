@@ -17,7 +17,7 @@ interface AnimationStageProps {
   onReplay: () => void
 }
 
-const SPEEDS = [0.5, 1, 1.5, 2]
+const SPEEDS = [0.25, 0.5, 1, 2, 4]
 
 export function AnimationStage({
   children,
@@ -36,7 +36,7 @@ export function AnimationStage({
   return (
     <div className="relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] glow-accent">
       <div className="grid-bg absolute inset-0 opacity-50" />
-      <div className="relative flex min-h-[400px] items-center justify-center p-6 md:min-h-[440px] md:p-10">
+      <div className="relative flex min-h-[420px] items-center justify-center p-4 md:min-h-[460px] md:p-6">
         <motion.div
           key={step}
           initial={{ opacity: 0.6, filter: 'blur(4px)' }}

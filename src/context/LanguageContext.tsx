@@ -11,7 +11,7 @@ interface LanguageContextValue {
 const LanguageContext = createContext<LanguageContextValue | null>(null)
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>('hinglish')
+  const [lang, setLang] = useState<Lang>('english')
 
   const toggle = () => setLang((l) => (l === 'hinglish' ? 'english' : 'hinglish'))
   const t = (bilingual: { hinglish: string; english: string }) => bilingual[lang]

@@ -8,9 +8,10 @@ import { QuizPanel } from './shared/QuizPanel'
 interface ConceptSectionProps {
   concept: Concept
   sectionTitle?: Bilingual
+  isActive?: boolean
 }
 
-export function ConceptSection({ concept, sectionTitle }: ConceptSectionProps) {
+export function ConceptSection({ concept, sectionTitle, isActive }: ConceptSectionProps) {
   const { t } = useLanguage()
 
   return (
@@ -40,7 +41,7 @@ export function ConceptSection({ concept, sectionTitle }: ConceptSectionProps) {
             {t({ hinglish: '10 modes · speed control · why per step', english: '10 modes · speed control · why per step' })}
           </span>
         </h3>
-        <ConceptVisualizer concept={concept} />
+        <ConceptVisualizer concept={concept} isActive={isActive} />
       </div>
 
       <ExplanationPanel
