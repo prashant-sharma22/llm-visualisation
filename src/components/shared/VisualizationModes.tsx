@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { Concept, VisualizationMode } from '../../types/concept'
 import { useLanguage } from '../../context/LanguageContext'
+import { CANONICAL_NUMERICAL_TOPIC_ID, hasMatrixTeaching, numericalPointer } from '../../data/content-scope'
 import { NumericalPlayground } from './NumericalPlayground'
 import {
   Box,
@@ -53,7 +54,7 @@ export function VisualizationModes({ mode, onModeChange, concept, animationSlot 
   const { lang, t } = useLanguage()
   const teaching = concept.teaching
 
-  const matrixText = teaching?.matrixDimensions ? t(teaching.matrixDimensions) : t(concept.explanation).slice(0, 400)
+  const matrixText = teaching?.matrixDimensions && hasMatrixTeaching(concept.id) ? t(teaching.matrixDimensions) : ''
   const asciiText = teaching?.asciiDiagram ? t(teaching.asciiDiagram) : ''
   const memoryText = teaching?.internalMemory ? t(teaching.internalMemory) : ''
   const buildText = teaching?.buildFromScratch ? t(teaching.buildFromScratch) : teaching?.dryRun ? t(teaching.dryRun) : ''
@@ -98,7 +99,20 @@ export function VisualizationModes({ mode, onModeChange, concept, animationSlot 
               <Grid3x3 size={18} />
               <span className="font-semibold">Matrix Shapes at Every Step</span>
             </div>
-            <AsciiBlock text={matrixText} />
+            {matrixText ? (
+              <AsciiBlock text={matrixText} />
+            ) : (
+              <div className="rounded-xl border border-violet-500/30 bg-violet-950/20 p-6 text-sm text-gray-300">
+                <p>{numericalPointer(lang)}</p>
+                <button
+                  type="button"
+                  onClick={() => document.getElementById(CANONICAL_NUMERICAL_TOPIC_ID)?.scrollIntoView({ behavior: 'smooth' })}
+                  className="mt-3 text-violet-300 underline hover:text-violet-200"
+                >
+                  {lang === 'hinglish' ? 'Q, K, V topic pe jao' : 'Go to Q, K, V topic'}
+                </button>
+              </div>
+            )}
           </div>
         )
       case 'tensor':

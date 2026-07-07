@@ -1,5 +1,6 @@
 import type { Bilingual, BilingualList, Concept, ConceptStep, ConceptTeaching } from '../../types/concept'
-import { getDefaultLab, getLabForConcept } from '../../data/numerical-lab'
+import { hasMatrixTeaching, hasNumericalLab } from '../../data/content-scope'
+import { getLabForConcept } from '../../data/numerical-lab'
 import { bi, defaultMistakes } from './teaching-utils'
 
 function hasText(b?: Bilingual) {
@@ -48,15 +49,18 @@ function defaultDerivation(c: Concept): Bilingual {
   )
 }
 
-function defaultMatrix(c: Concept): Bilingual {
+function defaultMatrix(c: Concept): Bilingual | undefined {
+  if (!hasMatrixTeaching(c.id)) return undefined
   return bi(
-    `**Matrix shapes** (concept-specific detail neeche full explanation mein):\n\nInput\n   ↓ shape depends on batch, seq_len, d_model\nOperation (${c.id})\n   ↓\nOutput\n\nTypical LLM: d_model=768/4096, seq_len=N, vocab=V.\nHar step pe shape likho — galat shape = galat multiply.`,
-    `**Matrix shapes:**\n\nInput → operation (${c.id}) → output\n\ntypical: d_model=768/4096, seq_len=N, vocab=V.\nWrite shape at every step — wrong shape = wrong multiply.`
+    `**Matrix shapes** for ${c.title.hinglish}:\n\nInput → operation → output\n\nHar step pe shape likho — galat shape = galat multiply.\nDetail is topic ki explanation aur Playground mein.`,
+    `**Matrix shapes** for ${c.title.english}:\n\nInput → operation → output\n\nWrite shape at every step — wrong shape = wrong multiply.\nSee this topic's explanation and Playground for details.`
   )
 }
 
-function defaultNumerical(c: Concept): Bilingual {
-  const lab = getLabForConcept(c.id) ?? getDefaultLab()
+function defaultNumerical(c: Concept): Bilingual | undefined {
+  if (!hasNumericalLab(c.id)) return undefined
+  const lab = getLabForConcept(c.id)
+  if (!lab?.length) return undefined
   const lines = lab.map((s, i) => {
     const title = s.title.hinglish
     return `**Step ${i + 1}: ${title}**\n${s.formula}\n${s.work}\n→ ${s.result}\n(${s.shapes})`
@@ -65,27 +69,17 @@ function defaultNumerical(c: Concept): Bilingual {
     const title = s.title.english
     return `**Step ${i + 1}: ${title}**\n${s.formula}\n${s.work}\n→ ${s.result}\n(${s.shapes})`
   })
+  const sentence = c.id === 'q-k-v' || c.id === 'attention-mechanism' ? '"The cat drinks milk"' : 'toy example'
   return {
-    hinglish: `**Hand-calculated example** ("The cat sat", d=2 toy case):\n\n${lines.join('\n\n')}\n\nPlayground tab mein step-by-step explore karo.`,
-    english: `**Hand-calculated example** ("The cat sat", d=2 toy case):\n\n${linesEn.join('\n\n')}\n\nExplore step-by-step in the Playground tab.`,
+    hinglish: `**Hand-calculated example** (${sentence}, d=2):\n\n${lines.join('\n\n')}\n\nPlayground tab mein step-by-step explore karo.`,
+    english: `**Hand-calculated example** (${sentence}, d=2):\n\n${linesEn.join('\n\n')}\n\nExplore step-by-step in the Playground tab.`,
   }
 }
 
 function defaultCommonQs(c: Concept): BilingualList {
-  const base = c.keyPoints.hinglish.map((p, i) => `**Q:** ${p}?\n**A:** ${c.keyPoints.english[i] ?? p}`)
   return {
-    hinglish: [
-      `**Kyun** ${c.title.hinglish} chahiye? ${c.tagline.hinglish}`,
-      `**Kya hoga agar hata dein?** Model/training/inference degrade — detail upar "why first" mein.`,
-      `**Training se pehle weights kya hote hain?** Random small init (Xavier/Kaiming).`,
-      ...base.slice(0, 3),
-    ],
-    english: [
-      `**Why** ${c.title.english}? ${c.tagline.english}`,
-      `**What if we remove it?** Model/training/inference degrades — see "why first" above.`,
-      `**Weights before training?** Random small initialization.`,
-      ...c.keyPoints.english.slice(0, 3).map((p) => `**Q:** ${p}?\n**A:** See explanation above.`),
-    ],
+    hinglish: c.keyPoints.hinglish.slice(0, 4).map((p, i) => `**Q:** ${p}?\n**A:** ${c.keyPoints.english[i] ?? c.explanation.hinglish.split('\n')[0]}`),
+    english: c.keyPoints.english.slice(0, 4).map((p) => `**Q:** ${p}?\n**A:** See full explanation above.`),
   }
 }
 
@@ -169,9 +163,13 @@ function mergeTeaching(concept: Concept): Partial<ConceptTeaching> {
     buildFromScratch: hasText(t.buildFromScratch) ? t.buildFromScratch : defaultBuild(concept),
     mathematicalDerivation: hasText(t.mathematicalDerivation) ? t.mathematicalDerivation : defaultDerivation(concept),
     matrixDimensions: hasText(t.matrixDimensions) ? t.matrixDimensions : defaultMatrix(concept),
-    numericalExample: hasText(t.numericalExample) ? t.numericalExample : defaultNumerical(concept),
+    numericalExample: hasText(t.numericalExample)
+      ? t.numericalExample
+      : defaultNumerical(concept),
     commonQuestions:
-      t.commonQuestions && t.commonQuestions.hinglish.length > 0 ? t.commonQuestions : defaultCommonQs(concept),
+      t.commonQuestions && t.commonQuestions.hinglish.length > 0
+        ? t.commonQuestions
+        : defaultCommonQs(concept),
     internalMemory: hasText(t.internalMemory) ? t.internalMemory : defaultMemory(concept),
     productionEngineering: hasText(t.productionEngineering) ? t.productionEngineering : defaultProduction(concept),
     interviewQuestions:

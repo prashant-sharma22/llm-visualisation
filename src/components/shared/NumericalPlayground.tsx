@@ -1,9 +1,15 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Calculator, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Calculator, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import type { Concept } from '../../types/concept'
 import { useLanguage } from '../../context/LanguageContext'
-import { getDefaultLab, getLabForConcept } from '../../data/numerical-lab'
+import {
+  CANONICAL_NUMERICAL_LABEL,
+  CANONICAL_NUMERICAL_TOPIC_ID,
+  hasNumericalLab,
+  numericalPointer,
+} from '../../data/content-scope'
+import { getLabForConcept } from '../../data/numerical-lab'
 
 interface NumericalPlaygroundProps {
   concept: Concept
@@ -11,8 +17,28 @@ interface NumericalPlaygroundProps {
 
 export function NumericalPlayground({ concept }: NumericalPlaygroundProps) {
   const { lang, t } = useLanguage()
-  const steps = getLabForConcept(concept.id) ?? getDefaultLab()
+  const steps = getLabForConcept(concept.id)
   const [step, setStep] = useState(0)
+
+  if (!hasNumericalLab(concept.id) || !steps?.length) {
+    return (
+      <div className="w-full max-w-2xl rounded-2xl border border-violet-500/30 bg-violet-950/20 p-6 text-center">
+        <Calculator className="mx-auto mb-3 text-violet-300" size={28} />
+        <p className="text-sm leading-relaxed text-gray-300">{numericalPointer(lang)}</p>
+        <button
+          type="button"
+          onClick={() => {
+            document.getElementById(CANONICAL_NUMERICAL_TOPIC_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }}
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm text-white hover:bg-violet-500"
+        >
+            <ExternalLink size={14} />
+            {t(CANONICAL_NUMERICAL_LABEL)}
+        </button>
+      </div>
+    )
+  }
+
   const current = steps[step]
 
   return (
@@ -24,9 +50,13 @@ export function NumericalPlayground({ concept }: NumericalPlaygroundProps) {
         </h4>
       </div>
       <p className="mb-4 text-xs text-gray-400">
-        {lang === 'hinglish'
-          ? '"The cat sat" · d=2 · har multiplication step-by-step'
-          : '"The cat sat" · d=2 · every multiplication step-by-step'}
+        {concept.id === CANONICAL_NUMERICAL_TOPIC_ID
+          ? lang === 'hinglish'
+            ? '"The cat drinks milk" · d=2 · poora QKV walkthrough yahi pe'
+            : '"The cat drinks milk" · d=2 · full QKV walkthrough lives here'
+          : lang === 'hinglish'
+            ? `${t(concept.title)} — is topic ka numerical example`
+            : `${t(concept.title)} — numerical example for this topic`}
       </p>
 
       <div className="mb-2 flex gap-1">

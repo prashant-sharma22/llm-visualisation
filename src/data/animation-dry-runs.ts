@@ -1,6 +1,7 @@
 import type { Bilingual, Concept } from '../types/concept'
 import { COMPUTE_STEP_COUNTS } from './compute-step-counts'
-import { getDefaultLab, getLabForConcept, type LabStep } from './numerical-lab'
+import { getLabForConcept, type LabStep } from './numerical-lab'
+import { hasNumericalLab } from './content-scope'
 
 const COMPUTE_STEP_OVERRIDE = COMPUTE_STEP_COUNTS
 
@@ -307,6 +308,44 @@ const gradientDescentDryRun: AnimDryRun[] = [
   },
 ]
 
+const mcpDryRun: AnimDryRun[] = [
+  {
+    title: { hinglish: 'Host app', english: 'Host app' },
+    description: { hinglish: 'Claude Desktop / IDE — user yahan baat karta hai.', english: 'Claude Desktop / IDE — user talks here.' },
+    formula: 'User → Host',
+    values: 'Host = Cursor, Claude Desktop, etc.',
+    shapes: 'client process',
+  },
+  {
+    title: { hinglish: 'MCP client', english: 'MCP client' },
+    description: { hinglish: 'Host ke andar MCP client protocol messages bhejta hai.', english: 'MCP client inside host sends protocol messages.' },
+    formula: 'JSON-RPC over stdio/HTTP',
+    values: 'request: {method, params}',
+    shapes: 'message envelope',
+  },
+  {
+    title: { hinglish: 'MCP server', english: 'MCP server' },
+    description: { hinglish: 'Tool/data expose karta hai — GitHub, DB, files.', english: 'Exposes tools/data — GitHub, DB, files.' },
+    formula: 'server.list_tools()',
+    values: 'tools: [search, read_file, query_db]',
+    shapes: 'capability list',
+  },
+  {
+    title: { hinglish: 'Tool call', english: 'Tool call' },
+    description: { hinglish: 'Model decide karta hai kaunsa tool — result wapas host ko.', english: 'Model picks a tool — result returns to host.' },
+    formula: 'call_tool(name, args)',
+    values: 'search("Q4 revenue") → {hits: [...]}',
+    shapes: 'request/response',
+  },
+  {
+    title: { hinglish: 'USB-C analogy', english: 'USB-C analogy' },
+    description: { hinglish: 'Ek standard — har tool alag API nahi.', english: 'One standard — not a custom API per tool.' },
+    formula: 'MCP = universal connector',
+    values: 'N servers, 1 client protocol',
+    shapes: 'many-to-one',
+  },
+]
+
 const DRY_RUN_MAP: Record<string, AnimDryRun[]> = {
   'transformer-flow': pipelineWalkthrough,
   annoy: annoyDryRun,
@@ -317,6 +356,8 @@ const DRY_RUN_MAP: Record<string, AnimDryRun[]> = {
   embeddings: embeddingsDryRun,
   'gradient-descent': gradientDescentDryRun,
   backpropagation: gradientDescentDryRun,
+  'model-context-protocol': mcpDryRun,
+  'ai-agents': mcpDryRun,
 }
 
 function labToDryRun(lab: LabStep): AnimDryRun {
@@ -351,9 +392,10 @@ export function getDryRunForConcept(concept: Concept, step: number): AnimDryRun 
   const custom = DRY_RUN_MAP[concept.id]
   if (custom?.length) return custom[step % custom.length]
 
-  const lab = getLabForConcept(concept.id) ?? getDefaultLab()
-  const labStep = lab[step % lab.length]
-  if (labStep && !custom) return labToDryRun(labStep)
+  const lab = getLabForConcept(concept.id)
+  if (lab?.length && hasNumericalLab(concept.id)) {
+    return labToDryRun(lab[step % lab.length])
+  }
 
   const s = concept.steps[step % Math.max(concept.steps.length, 1)]
   return {
@@ -363,7 +405,7 @@ export function getDryRunForConcept(concept: Concept, step: number): AnimDryRun 
       english: s?.caption?.english ?? concept.tagline.english,
     },
     formula: concept.teaching?.mathematicalDerivation?.english?.split('\n')[0] ?? concept.id,
-    values: concept.teaching?.numericalExample?.english?.slice(0, 400) ?? s?.caption.english ?? '',
+    values: s?.caption?.english ?? concept.tagline.english,
     shapes: concept.teaching?.matrixDimensions?.english?.split('\n')[0] ?? '—',
   }
 }
